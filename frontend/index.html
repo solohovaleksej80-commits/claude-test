@@ -2,73 +2,137 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TRADESIM // DEMO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>TradeSim · DEMO</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="grid-bg"></div>
-
-  <div class="demo-banner">
-    УЧЕБНЫЙ СИМУЛЯТОР — ВСЕ ДАННЫЕ ВИРТУАЛЬНЫЕ // SIMULATED DATA // НЕ РЕАЛЬНЫЕ ДЕНЬГИ
+  <!-- animated gradient background -->
+  <div class="bg-mesh">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
   </div>
 
-  <header class="topbar">
-    <span class="logo">TRADESIM</span>
-    <span class="conn" id="conn">OFFLINE</span>
-  </header>
-
-  <nav class="tabs">
-    <button class="tab active" data-tab="dash">ДАШБОРД</button>
-    <button class="tab" data-tab="book">СТАКАН</button>
-    <button class="tab" data-tab="chain">БЛОКЧЕЙН</button>
-    <button class="tab" data-tab="tx">ТРАНЗАКЦИИ</button>
-  </nav>
-
-  <main>
-    <!-- DASHBOARD -->
-    <section id="dash" class="view active">
-      <div class="balance-card">
-        <div class="label">БАЛАНС // УЧЕБНЫЕ ЕДИНИЦЫ (УЕ)</div>
-        <div class="balance" id="balance">0.00</div>
-        <div class="sub" id="tier-line">ЭТАП 1</div>
+  <div class="app">
+    <header class="appbar">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">TradeSim</span>
       </div>
-
-      <div class="counters">
-        <div class="counter"><span class="c-label">ПРОАНАЛИЗИРОВАНО</span><span class="c-val" id="c-analyzed">0</span></div>
-        <div class="counter"><span class="c-label">ПРИБЫЛЬНЫХ</span><span class="c-val" id="c-profitable">0</span></div>
+      <div class="appbar-right">
+        <span class="demo-pill">DEMO · виртуальные данные</span>
+        <span class="conn" id="conn"><span class="conn-dot"></span><span id="conn-text">…</span></span>
       </div>
+    </header>
 
-      <div class="tiers" id="tiers"></div>
+    <main class="screens">
+      <!-- ===================== DASHBOARD ===================== -->
+      <section id="dash" class="screen active">
+        <div class="hero">
+          <div class="hero-glow"></div>
+          <div class="hero-top">
+            <span class="hero-label">Баланс · учебные единицы</span>
+            <span class="tier-chip" id="tier-chip">Этап 1</span>
+          </div>
+          <div class="hero-balance"><span id="balance">0.00</span><span class="cur">УЕ</span></div>
+          <div class="hero-stats">
+            <div class="hstat">
+              <span class="hstat-val" id="c-analyzed">0</span>
+              <span class="hstat-label">проанализировано</span>
+            </div>
+            <div class="hstat-divider"></div>
+            <div class="hstat">
+              <span class="hstat-val accent-green" id="c-profitable">0</span>
+              <span class="hstat-label">прибыльных</span>
+            </div>
+          </div>
+        </div>
 
-      <div class="meta" id="meta"></div>
-    </section>
+        <div class="card level-card">
+          <div class="level-head">
+            <div class="level-badge" id="level-badge">BRONZE</div>
+            <div class="level-meta" id="level-meta">—</div>
+          </div>
+          <div class="progress"><div class="progress-fill" id="level-progress"></div></div>
+        </div>
 
-    <!-- ORDER BOOK -->
-    <section id="book" class="view">
-      <div class="hint" id="book-hint"></div>
-      <div class="cards" id="cards"></div>
-    </section>
+        <div class="section-title">Этапы подписки</div>
+        <div class="tiers-grid" id="tiers"></div>
 
-    <!-- BLOCKCHAIN -->
-    <section id="chain" class="view">
-      <div class="sim-tag">SIMULATED DATA // НЕ РЕАЛЬНЫЙ БЛОКЧЕЙН</div>
-      <div class="chain-feed" id="chain-feed"></div>
-    </section>
+        <div class="stat-grid" id="info-grid"></div>
+      </section>
 
-    <!-- TRANSACTIONS -->
-    <section id="tx" class="view">
-      <div class="tx-list" id="tx-list"></div>
-      <button class="btn-load" id="tx-load">ЗАГРУЗИТЬ СТАРЫЕ</button>
-    </section>
-  </main>
+      <!-- ===================== ORDER BOOK ===================== -->
+      <section id="book" class="screen">
+        <div class="book-head" id="book-hint"></div>
+        <div class="cards-grid" id="cards"></div>
+        <div class="empty" id="book-empty">Ожидаем сделки…</div>
+      </section>
 
-  <div class="tx-modal" id="tx-modal">
-    <div class="tx-modal-inner">
-      <div class="tx-modal-head">ДЕТАЛИ ТРАНЗАКЦИИ <span class="sim-tag-sm">SIMULATED</span></div>
-      <div id="tx-modal-body"></div>
-      <button class="btn" id="tx-modal-close">ЗАКРЫТЬ</button>
+      <!-- ===================== BLOCKCHAIN ===================== -->
+      <section id="chain" class="screen">
+        <div class="sim-note">
+          <span class="sim-dot"></span> Симуляция · данные сгенерированы программно, это не реальный блокчейн
+        </div>
+        <div class="chain-feed" id="chain-feed"></div>
+      </section>
+
+      <!-- ===================== TRANSACTIONS ===================== -->
+      <section id="tx" class="screen">
+        <div class="section-title">История операций</div>
+        <div class="tx-list" id="tx-list"></div>
+        <button class="btn ghost" id="tx-load">Загрузить старые</button>
+      </section>
+    </main>
+
+    <nav class="tabbar">
+      <button class="tabitem active" data-tab="dash">
+        <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Главная</span>
+      </button>
+      <button class="tabitem" data-tab="book">
+        <svg viewBox="0 0 24 24"><path d="M3 3h18v4H3V3zm0 7h12v4H3v-4zm0 7h18v4H3v-4z"/></svg>
+        <span>Стакан</span>
+      </button>
+      <button class="tabitem" data-tab="chain">
+        <svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6l-8-4zm0 5a3 3 0 110 6 3 3 0 010-6z"/></svg>
+        <span>Блокчейн</span>
+      </button>
+      <button class="tabitem" data-tab="tx">
+        <svg viewBox="0 0 24 24"><path d="M7 7h10l-3-3 1.4-1.4L21 8l-5.6 5.4L14 12l3-3H7V7zm10 10H7l3 3-1.4 1.4L3 16l5.6-5.4L10 12l-3 3h10v2z"/></svg>
+        <span>Операции</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- toast host -->
+  <div class="toast-host" id="toast-host"></div>
+
+  <!-- confirm modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal">
+      <div class="modal-title" id="confirm-title">Подтверждение</div>
+      <div class="modal-body" id="confirm-body"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="confirm-cancel">Отмена</button>
+        <button class="btn" id="confirm-ok">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- tx detail modal -->
+  <div class="modal-overlay" id="tx-modal">
+    <div class="modal">
+      <div class="modal-title">Детали транзакции <span class="sim-tag-sm">SIMULATED</span></div>
+      <div class="modal-body mono" id="tx-modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn" id="tx-modal-close">Закрыть</button>
+      </div>
     </div>
   </div>
 

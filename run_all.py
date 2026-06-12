@@ -67,10 +67,28 @@ def backend_up():
         return False
 
 
+def free_port_8000():
+    """Best-effort: kill whatever is listening on :8000 so uvicorn can bind."""
+    try:
+        if IS_WIN:
+            ps = (
+                "Get-NetTCPConnection -LocalPort 8000 -State Listen "
+                "-ErrorAction SilentlyContinue | "
+                "ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"
+            )
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], timeout=15)
+        else:
+            subprocess.run("fuser -k 8000/tcp", shell=True, timeout=15)
+        time.sleep(1)
+    except Exception:
+        pass
+
+
 def start_backend():
     if backend_up():
         log("Бэкенд уже запущен на :8000 — переиспользую.")
         return
+    free_port_8000()
     log("Запускаю бэкенд (uvicorn :8000)…")
     p = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "backend.app.main:app", "--port", "8000"],
@@ -80,6 +98,10 @@ def start_backend():
     for _ in range(30):
         if backend_up():
             log("Бэкенд готов.")
+            return
+        if p.poll() is not None:
+            log("Бэкенд завершился сразу (скорее всего порт 8000 занят). "
+                "Закройте старое окно с бэкендом и запустите снова.")
             return
         time.sleep(1)
     log("Бэкенд не поднялся за 30с — проверьте вывод выше.")
@@ -140,6 +162,23 @@ def set_webapp_url(url):
     return webapp
 
 
+def verify_tunnel(url):
+    """Confirm the public tunnel actually reaches our backend."""
+    if not url:
+        return
+    for _ in range(10):
+        try:
+            req = urllib.request.Request(url.rstrip("/") + "/health")
+            with urllib.request.urlopen(req, timeout=5) as r:
+                if r.status == 200:
+                    log(f"Туннель достаёт до бэкенда: {url}/app/ открывается.")
+                    return
+        except Exception:
+            time.sleep(2)
+    log("ВНИМАНИЕ: туннель поднят, но бэкенд через него не отвечает. "
+        "Проверьте, что окно бэкенда работает (порт 8000).")
+
+
 def start_bot(webapp_url):
     log("Запускаю Telegram-бот…")
     env = os.environ.copy()
@@ -181,6 +220,7 @@ def main():
     start_backend()
     url = start_tunnel()
     webapp = set_webapp_url(url) if url else None
+    verify_tunnel(url)
     bot = start_bot(webapp)
 
     log("Всё запущено. Откройте бота в Telegram и отправьте /start.")

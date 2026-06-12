@@ -1,0 +1,148 @@
+/* TradeSim — cyberpunk / brutalist. No rounded corners, no gradients, no emoji. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+:root {
+  --bg: #0B0B0B;
+  --card: #111111;
+  --accent: #FF4D00;
+  --special: #E5FF00;
+  --profit: #00FF88;
+  --loss: #FF3355;
+  --text: #FFFFFF;
+  --muted: #666666;
+  --inactive: #2A2A2A;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; border-radius: 0 !important; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Stepped parallax grid background */
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--inactive) 1px, transparent 1px),
+    linear-gradient(90deg, var(--inactive) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.25;
+  animation: gridmove 1.2s steps(8) infinite;
+}
+@keyframes gridmove { from { background-position: 0 0; } to { background-position: 0 -40px; } }
+
+.demo-banner {
+  position: relative; z-index: 2;
+  background: var(--special); color: #000;
+  font-weight: 800; font-size: 10px; letter-spacing: 0.5px;
+  padding: 6px 8px; text-align: center; text-transform: uppercase;
+  border-bottom: 2px solid #000;
+}
+
+.topbar {
+  position: relative; z-index: 2;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px; border-bottom: 2px solid var(--accent);
+}
+.logo { font-weight: 800; letter-spacing: 2px; color: var(--accent); }
+.conn { font-size: 10px; color: var(--loss); border: 1px solid var(--loss); padding: 2px 6px; }
+.conn.on { color: var(--profit); border-color: var(--profit); }
+
+.tabs { position: relative; z-index: 2; display: flex; border-bottom: 1px solid var(--inactive); }
+.tab {
+  flex: 1; background: var(--bg); color: var(--muted);
+  border: none; border-right: 1px solid var(--inactive);
+  padding: 10px 4px; font-family: inherit; font-size: 11px; font-weight: 700;
+  cursor: pointer; text-transform: uppercase;
+}
+.tab.active { color: #000; background: var(--accent); }
+
+main { position: relative; z-index: 2; padding: 12px; }
+.view { display: none; }
+.view.active { display: block; }
+
+.balance-card { background: var(--card); border: 2px solid var(--accent); padding: 16px; margin-bottom: 12px; }
+.balance-card .label { color: var(--muted); font-size: 10px; letter-spacing: 1px; }
+.balance { font-size: 36px; font-weight: 800; color: var(--special); margin: 6px 0; }
+.balance-card .sub { color: var(--accent); font-weight: 700; }
+
+.counters { display: flex; gap: 8px; margin-bottom: 12px; }
+.counter { flex: 1; background: var(--card); border: 1px solid var(--inactive); padding: 10px; }
+.c-label { display: block; color: var(--muted); font-size: 9px; }
+.c-val { display: block; font-size: 22px; font-weight: 800; color: var(--profit); }
+
+.tiers { display: flex; gap: 8px; margin-bottom: 12px; }
+.tier-bar {
+  flex: 1; background: var(--card); border: 1px solid var(--inactive);
+  padding: 12px 8px; cursor: pointer; text-align: center;
+}
+.tier-bar.active { border: 2px solid var(--accent); }
+.tier-bar .t-name { font-size: 10px; color: var(--muted); }
+.tier-bar .t-price { font-weight: 800; color: var(--text); margin-top: 4px; }
+.tier-bar.active .t-price { color: var(--accent); }
+
+.meta { background: var(--card); border: 1px solid var(--inactive); padding: 12px; color: var(--muted); }
+.meta b { color: var(--text); }
+
+.hint { color: var(--muted); margin-bottom: 10px; font-size: 11px; }
+.hint.locked { color: var(--special); border: 1px dashed var(--special); padding: 8px; }
+
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card { background: var(--card); border: 1px solid var(--inactive); padding: 10px; position: relative; }
+.card.analyzing { border-color: var(--muted); }
+.card.open { border: 2px solid var(--profit); }
+.card.accepted { border: 2px solid #2196F3; }
+.card.completed { opacity: 0.6; }
+.card.missed { opacity: 0.5; }
+.card .asset { font-weight: 800; }
+.card .vol { color: var(--muted); font-size: 11px; }
+.card .state { font-size: 10px; margin-top: 6px; letter-spacing: 1px; }
+.card.analyzing .state { color: var(--muted); }
+.card .profit-pos { color: var(--profit); font-weight: 800; }
+.card .profit-neg { color: var(--loss); font-weight: 800; }
+.card .struck { text-decoration: line-through; color: var(--muted); }
+
+/* analysis running dashed line */
+.dash-run { height: 4px; margin-top: 6px; background-image: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 8px); background-size: 8px 4px; animation: dashmove 0.05s steps(1) infinite; }
+@keyframes dashmove { to { background-position: 8px 0; } }
+
+/* square timer fill bottom->up */
+.timer { position: relative; height: 6px; background: var(--inactive); margin-top: 8px; }
+.timer .fill { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--profit); }
+.timer.warn .fill { background: var(--loss); animation: blink 0.5s steps(1) infinite; }
+.timer-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+@keyframes blink { 50% { opacity: 0.2; } }
+
+.btn { background: var(--accent); color: #000; border: none; font-family: inherit; font-weight: 800; padding: 8px 10px; width: 100%; cursor: pointer; text-transform: uppercase; margin-top: 8px; }
+.btn:active { transform: translateY(2px); }
+.btn.special { background: var(--special); }
+
+.sim-tag { background: var(--special); color: #000; font-weight: 800; font-size: 10px; padding: 4px 8px; display: inline-block; margin-bottom: 10px; }
+.sim-tag-sm { background: var(--special); color: #000; font-size: 9px; padding: 1px 4px; }
+
+.chain-feed { display: flex; flex-direction: column; gap: 2px; }
+.chain-row { display: flex; justify-content: space-between; background: var(--card); border-left: 2px solid var(--inactive); padding: 6px 8px; font-size: 11px; cursor: pointer; }
+.chain-row.flash { animation: flash 0.05s steps(1); }
+.chain-row.mine { border-left-color: var(--accent); }
+.chain-row .hash { color: var(--accent); }
+.chain-row .amt { color: var(--text); }
+.chain-row .st { color: var(--profit); font-size: 9px; }
+@keyframes flash { from { background: var(--special); } to { background: var(--card); } }
+
+.tx-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.tx-row { display: flex; justify-content: space-between; background: var(--card); border: 1px solid var(--inactive); padding: 8px; }
+.tx-row .amt-pos { color: var(--profit); font-weight: 700; }
+.tx-row .amt-neg { color: var(--loss); font-weight: 700; }
+.tx-row .note { color: var(--muted); font-size: 10px; }
+.btn-load { background: var(--card); color: var(--text); border: 1px solid var(--accent); font-family: inherit; font-weight: 700; padding: 10px; width: 100%; cursor: pointer; }
+
+.tx-modal { display: none; position: fixed; inset: 0; z-index: 10; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; }
+.tx-modal.on { display: flex; }
+.tx-modal-inner { background: var(--card); border: 2px solid var(--accent); padding: 16px; width: 90%; max-width: 360px; }
+.tx-modal-head { font-weight: 800; margin-bottom: 10px; }
+#tx-modal-body { font-size: 11px; line-height: 1.8; word-break: break-all; }

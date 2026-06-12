@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TRADESIM // DEMO</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <div class="demo-banner">
+    УЧЕБНЫЙ СИМУЛЯТОР — ВСЕ ДАННЫЕ ВИРТУАЛЬНЫЕ // SIMULATED DATA // НЕ РЕАЛЬНЫЕ ДЕНЬГИ
+  </div>
+
+  <header class="topbar">
+    <span class="logo">TRADESIM</span>
+    <span class="conn" id="conn">OFFLINE</span>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="dash">ДАШБОРД</button>
+    <button class="tab" data-tab="book">СТАКАН</button>
+    <button class="tab" data-tab="chain">БЛОКЧЕЙН</button>
+    <button class="tab" data-tab="tx">ТРАНЗАКЦИИ</button>
+  </nav>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="dash" class="view active">
+      <div class="balance-card">
+        <div class="label">БАЛАНС // УЧЕБНЫЕ ЕДИНИЦЫ (УЕ)</div>
+        <div class="balance" id="balance">0.00</div>
+        <div class="sub" id="tier-line">ЭТАП 1</div>
+      </div>
+
+      <div class="counters">
+        <div class="counter"><span class="c-label">ПРОАНАЛИЗИРОВАНО</span><span class="c-val" id="c-analyzed">0</span></div>
+        <div class="counter"><span class="c-label">ПРИБЫЛЬНЫХ</span><span class="c-val" id="c-profitable">0</span></div>
+      </div>
+
+      <div class="tiers" id="tiers"></div>
+
+      <div class="meta" id="meta"></div>
+    </section>
+
+    <!-- ORDER BOOK -->
+    <section id="book" class="view">
+      <div class="hint" id="book-hint"></div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <!-- BLOCKCHAIN -->
+    <section id="chain" class="view">
+      <div class="sim-tag">SIMULATED DATA // НЕ РЕАЛЬНЫЙ БЛОКЧЕЙН</div>
+      <div class="chain-feed" id="chain-feed"></div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="tx" class="view">
+      <div class="tx-list" id="tx-list"></div>
+      <button class="btn-load" id="tx-load">ЗАГРУЗИТЬ СТАРЫЕ</button>
+    </section>
+  </main>
+
+  <div class="tx-modal" id="tx-modal">
+    <div class="tx-modal-inner">
+      <div class="tx-modal-head">ДЕТАЛИ ТРАНЗАКЦИИ <span class="sim-tag-sm">SIMULATED</span></div>
+      <div id="tx-modal-body"></div>
+      <button class="btn" id="tx-modal-close">ЗАКРЫТЬ</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -6,7 +6,11 @@ Starts everything needed to open the Mini App inside Telegram from localhost:
   3. the Telegram bot, with WEBAPP_URL set to that tunnel URL (no copy-paste)
 
 Usage:
-    python run_all.py
+    python run_all.py [tunnel]
+
+    tunnel = cloudflare (default) | lhr (localhost.run) | pinggy
+    Use lhr/pinggy if your network blocks cloudflare (DNS errors on
+    *.trycloudflare.com). Both use the built-in ssh client, no signup.
 
 Ctrl+C stops everything. Requires BOT_TOKEN in .env.
 """
@@ -107,39 +111,71 @@ def start_backend():
     log("Бэкенд не поднялся за 30с — проверьте вывод выше.")
 
 
-def start_tunnel():
-    log("Запускаю туннель cloudflared…")
-    p = subprocess.Popen(
+def _tunnel_spec(provider):
+    """Return (command, url_regex, label, needs_cloudflared) for a provider."""
+    if provider == "lhr":
+        return (
+            ["ssh", "-o", "StrictHostKeyChecking=accept-new", "-o", "ServerAliveInterval=30",
+             "-R", "80:localhost:8000", "nokey@localhost.run"],
+            r"https://[a-z0-9-]+\.lhr\.life",
+            "localhost.run",
+            False,
+        )
+    if provider == "pinggy":
+        return (
+            ["ssh", "-p", "443", "-o", "StrictHostKeyChecking=accept-new", "-o", "ServerAliveInterval=30",
+             "-R0:localhost:8000", "a.pinggy.io"],
+            r"https://[a-z0-9.-]+\.pinggy\.link",
+            "pinggy.io",
+            False,
+        )
+    # default: cloudflare
+    return (
         [str(CF_BIN), "tunnel", "--url", "http://localhost:8000"],
-        cwd=str(ROOT),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
+        r"https://[a-z0-9-]+\.trycloudflare\.com",
+        "cloudflared",
+        True,
     )
+
+
+def start_tunnel(provider):
+    cmd, regex, label, needs_cf = _tunnel_spec(provider)
+    if needs_cf:
+        ensure_cloudflared()
+    log(f"Запускаю туннель ({label})…")
+    try:
+        p = subprocess.Popen(
+            cmd, cwd=str(ROOT),
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, bufsize=1,
+        )
+    except FileNotFoundError:
+        log("Не найден ssh. Установите OpenSSH-клиент или используйте провайдер cloudflare.")
+        return None
     procs.append(p)
 
-    url_pattern = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
+    url_pattern = re.compile(regex)
     found = {"url": None}
 
     def reader():
         for line in p.stdout:
+            print(line.rstrip(), flush=True)  # show tunnel output for diagnostics
             if found["url"] is None:
                 m = url_pattern.search(line)
                 if m:
                     found["url"] = m.group(0)
-            # keep draining so the pipe never blocks cloudflared
-        # stream ended
 
-    t = threading.Thread(target=reader, daemon=True)
-    t.start()
+    threading.Thread(target=reader, daemon=True).start()
 
-    for _ in range(40):
+    for _ in range(120):  # ssh handshake can take longer than cloudflared
         if found["url"]:
             log(f"Туннель готов: {found['url']}")
             return found["url"]
+        if p.poll() is not None:
+            log(f"Туннель ({label}) завершился. См. вывод выше.")
+            return None
         time.sleep(0.5)
-    log("Не удалось получить адрес туннеля за 20с.")
+    log("Не удалось получить адрес туннеля за 60с.")
     return None
 
 
@@ -216,9 +252,14 @@ def main():
         log("Нет .env — создайте его и впишите BOT_TOKEN. См. .env.example.")
         sys.exit(1)
 
-    ensure_cloudflared()
+    provider = sys.argv[1].lower() if len(sys.argv) > 1 else "cloudflare"
+    if provider not in ("cloudflare", "lhr", "pinggy"):
+        log(f"Неизвестный туннель '{provider}'. Доступно: cloudflare | lhr | pinggy")
+        sys.exit(1)
+    log(f"Туннель-провайдер: {provider}")
+
     start_backend()
-    url = start_tunnel()
+    url = start_tunnel(provider)
     webapp = set_webapp_url(url) if url else None
     verify_tunnel(url)
     bot = start_bot(webapp)

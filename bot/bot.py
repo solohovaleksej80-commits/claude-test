@@ -68,12 +68,23 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="РЕФЕРАЛКА", callback_data="referral")],
         [InlineKeyboardButton(text="НАСТРОЙКИ", callback_data="settings")],
     ]
-    if settings.webapp_url:
+    # Telegram allows Web App buttons only over HTTPS. With an http:// localhost
+    # URL the API rejects the whole message, so we add the button only for https.
+    if settings.webapp_url.startswith("https://"):
         rows.insert(
             0,
             [InlineKeyboardButton(text="ОТКРЫТЬ MINI APP", web_app=WebAppInfo(url=settings.webapp_url))],
         )
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def webapp_hint() -> str:
+    if settings.webapp_url.startswith("https://"):
+        return ""
+    return (
+        "\n\n_Кнопка Mini App появится, когда WEBAPP_URL будет на https "
+        "(нужен туннель, см. инструкцию). Сейчас задан несовместимый адрес._"
+    )
 
 
 def profile_text(user: models.User) -> str:
@@ -103,25 +114,29 @@ def tiers_text() -> str:
     return "\n".join(lines)
 
 
+def welcome_text() -> str:
+    return (
+        f"{DEMO_BANNER}"
+        "`TRADESIM`\n"
+        "Добро пожаловать в учебный симулятор трейдинга.\n\n"
+        "Всё внутри — виртуальное (учебные единицы). Откройте Mini App, "
+        "чтобы увидеть дашборд, стакан сделок и блокчейн-обозреватель.\n\n"
+        "Команды: /profile /tiers /buy /referral /settings /support"
+        f"{webapp_hint()}"
+    )
+
+
 @dp.message(CommandStart(deep_link=True))
 async def start_with_ref(message: Message, command):
     ref = command.args
     _get_or_create(message.from_user.id, message.from_user.username, ref)
-    await message.answer(
-        f"{DEMO_BANNER}`TRADESIM`\nДобро пожаловать. Это учебный симулятор.\nГлавное меню:",
-        reply_markup=main_menu_kb(),
-        parse_mode="Markdown",
-    )
+    await message.answer(welcome_text(), reply_markup=main_menu_kb(), parse_mode="Markdown")
 
 
 @dp.message(CommandStart())
 async def start(message: Message):
     _get_or_create(message.from_user.id, message.from_user.username, None)
-    await message.answer(
-        f"{DEMO_BANNER}`TRADESIM`\nДобро пожаловать. Это учебный симулятор.\nГлавное меню:",
-        reply_markup=main_menu_kb(),
-        parse_mode="Markdown",
-    )
+    await message.answer(welcome_text(), reply_markup=main_menu_kb(), parse_mode="Markdown")
 
 
 @dp.message(Command("menu"))
@@ -257,11 +272,28 @@ async def cb_toggle(cb: CallbackQuery):
     await cb.answer("Сохранено")
 
 
+@dp.errors()
+async def on_error(event):
+    logging.exception("Ошибка при обработке апдейта: %s", event.exception)
+    return True
+
+
 async def main():
     if not settings.bot_token:
         raise SystemExit("BOT_TOKEN не задан в .env — бот не может запуститься.")
     init_db()
     bot = Bot(settings.bot_token)
+    me = await bot.get_me()
+    logging.info("Бот запущен: @%s (id %s)", me.username, me.id)
+    if settings.webapp_url.startswith("https://"):
+        logging.info("Mini App: %s", settings.webapp_url)
+    else:
+        logging.warning(
+            "WEBAPP_URL=%s не на https — кнопка Mini App отключена. "
+            "Поднимите HTTPS-туннель и пропишите его в .env.",
+            settings.webapp_url,
+        )
+    await bot.delete_webhook(drop_pending_updates=False)
     await dp.start_polling(bot)
 
 

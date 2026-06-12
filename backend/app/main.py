@@ -1,13 +1,17 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from . import simulator
 from .database import init_db
 from .routers import admin, boosts, referrals, subscriptions, trades, users
 from .ws_manager import manager
+
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend"))
 
 _stop_event = asyncio.Event()
 
@@ -70,3 +74,10 @@ async def websocket_endpoint(ws: WebSocket):
         await manager.disconnect(ws)
     except Exception:
         await manager.disconnect(ws)
+
+
+# Serve the Mini App from the backend so one origin (and one HTTPS tunnel)
+# covers both the UI and the API — avoids mixed-content and CORS issues.
+# Available at /app/ . Mounted last so it never shadows /api, /ws, /docs.
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="app")

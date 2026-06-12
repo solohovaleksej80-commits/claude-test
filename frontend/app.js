@@ -1,5 +1,13 @@
 /* TradeSim Mini App (DEMO). All data is simulated. */
-const API = (window.TRADESIM_API || "http://localhost:8000");
+// API base resolution:
+//  - explicit override via window.TRADESIM_API wins;
+//  - standalone dev server (python http.server on :5500) or file:// -> talk to backend on :8000;
+//  - otherwise (served by the backend itself, incl. via HTTPS tunnel) -> same origin.
+const API = (typeof window.TRADESIM_API === "string")
+  ? window.TRADESIM_API
+  : (location.port === "5500" || location.protocol === "file:")
+    ? "http://localhost:8000"
+    : location.origin;
 const WS_URL = API.replace(/^http/, "ws") + "/ws";
 
 const tg = window.Telegram ? window.Telegram.WebApp : null;
